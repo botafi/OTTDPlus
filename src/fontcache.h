@@ -159,8 +159,12 @@ inline const Sprite *GetGlyph(FontSize size, char32_t key)
 /** Get the width of a glyph */
 inline uint GetGlyphWidth(FontSize size, char32_t key)
 {
-	FontCache *fc = FontCache::Get(size);
-	return fc->GetGlyphWidth(fc->MapCharToGlyph(key));
+	#ifdef DEDICATED
+		return 8; // Arbitrary fixed width for dedicated server
+	#else
+		FontCache *fc = FontCache::Get(size);
+		return fc->GetGlyphWidth(fc->MapCharToGlyph(key));
+	#endif
 }
 
 inline bool GetDrawGlyphShadow(FontSize size)

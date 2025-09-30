@@ -218,7 +218,7 @@ static bool ResizeSpriteIn(SpriteLoader::SpriteCollection &sprite, ZoomLevel src
 	dest_sprite.x_offs = src_sprite.x_offs * scaled_1;
 	dest_sprite.y_offs = src_sprite.y_offs * scaled_1;
 	dest_sprite.colours = src_sprite.colours;
-
+	#ifndef DEDICATED
 	dest_sprite.AllocateData(tgt, static_cast<size_t>(dest_sprite.width) * dest_sprite.height);
 
 	SpriteLoader::CommonPixel *dst = dest_sprite.data;
@@ -229,6 +229,7 @@ static bool ResizeSpriteIn(SpriteLoader::SpriteCollection &sprite, ZoomLevel src
 			dst++;
 		}
 	}
+	#endif
 
 	return true;
 }
@@ -246,6 +247,7 @@ static void ResizeSpriteOut(SpriteLoader::SpriteCollection &sprite, ZoomLevel zo
 	dest_sprite.y_offs = UnScaleByZoom(root_sprite.y_offs, zoom);
 	dest_sprite.colours = root_sprite.colours;
 
+	#ifndef DEDICATED
 	dest_sprite.AllocateData(zoom, static_cast<size_t>(dest_sprite.height) * dest_sprite.width);
 
 	SpriteLoader::CommonPixel *dst = dest_sprite.data;
@@ -267,6 +269,7 @@ static void ResizeSpriteOut(SpriteLoader::SpriteCollection &sprite, ZoomLevel zo
 		}
 		src = src_ln + src_sprite.width;
 	}
+	#endif
 }
 
 static bool PadSingleSprite(SpriteLoader::Sprite *sprite, ZoomLevel zoom, uint pad_left, uint pad_top, uint pad_right, uint pad_bottom)
@@ -276,6 +279,7 @@ static bool PadSingleSprite(SpriteLoader::Sprite *sprite, ZoomLevel zoom, uint p
 
 	if (width > UINT16_MAX || height > UINT16_MAX) return false;
 
+	#ifndef DEDICATED
 	/* Copy source data and reallocate sprite memory. */
 	size_t sprite_size = static_cast<size_t>(sprite->width) * sprite->height;
 	std::vector<SpriteLoader::CommonPixel> src_data(sprite->data, sprite->data + sprite_size);
@@ -308,6 +312,7 @@ static bool PadSingleSprite(SpriteLoader::Sprite *sprite, ZoomLevel zoom, uint p
 			}
 		}
 	}
+	#endif
 
 	/* Update sprite size. */
 	sprite->width   = width;
@@ -502,20 +507,27 @@ static void *ReadSprite(const SpriteCache *sc, SpriteID id, SpriteType sprite_ty
 		 *  something ;) The image should really have been a data-stream
 		 *  (so type = 0xFF basically). */
 		const auto &root_sprite = sprite.Root();
-		uint num = root_sprite.width * root_sprite.height;
 
-		Sprite *s = allocator.Allocate<Sprite>(sizeof(*s) + num);
-		s->width = root_sprite.width;
-		s->height = root_sprite.height;
-		s->x_offs = root_sprite.x_offs;
-		s->y_offs = root_sprite.y_offs;
-
-		SpriteLoader::CommonPixel *src = root_sprite.data;
-		uint8_t *dest = reinterpret_cast<uint8_t *>(s->data);
-		while (num-- > 0) {
-			*dest++ = src->m;
-			src++;
-		}
+		#ifdef DEDICATED
+			Sprite *s = allocator.Allocate<Sprite>(sizeof(*s));
+			s->width = root_sprite.width;
+			s->height = root_sprite.height;
+			s->x_offs = root_sprite.x_offs;
+			s->y_offs = root_sprite.y_offs;
+		#else
+			uint num = root_sprite.width * root_sprite.height;
+			Sprite *s = allocator.Allocate<Sprite>(sizeof(*s) + num);
+			s->width = root_sprite.width;
+			s->height = root_sprite.height;
+			s->x_offs = root_sprite.x_offs;
+			s->y_offs = root_sprite.y_offs;
+			SpriteLoader::CommonPixel *src = root_sprite.data;
+			uint8_t *dest = reinterpret_cast<uint8_t *>(s->data);
+			while (num-- > 0) {
+				*dest++ = src->m;
+				src++;
+			}
+		#endif
 
 		return s;
 	}

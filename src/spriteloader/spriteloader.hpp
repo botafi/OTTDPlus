@@ -72,7 +72,12 @@ public:
 		 * @param zoom Zoom level to allocate the data for.
 		 * @param size the minimum size of the data field.
 		 */
-		void AllocateData(ZoomLevel zoom, size_t size) { this->data = Sprite::buffer[zoom].ZeroAllocate(size); }
+		void AllocateData(ZoomLevel zoom, size_t size) {
+			#ifdef DEDICATED
+			throw std::logic_error("Cannot allocate sprite data in dedicated server");
+			#endif
+			this->data = Sprite::buffer[zoom].ZeroAllocate(size);
+		}
 	private:
 		/** Allocated memory to pass sprite data around */
 		static SpriteCollMap<ReusableBuffer<SpriteLoader::CommonPixel>> buffer;

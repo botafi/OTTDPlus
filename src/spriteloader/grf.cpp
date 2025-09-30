@@ -100,7 +100,7 @@ bool DecodeSingleSprite(SpriteLoader::Sprite *sprite, SpriteFile &file, size_t f
 	}
 
 	if (num != 0) return WarnCorruptSprite(file, file_pos, __LINE__);
-
+	#ifndef DEDICATED
 	sprite->AllocateData(zoom_lvl, static_cast<size_t>(sprite->width) * sprite->height);
 
 	/* Convert colour depth to pixel size. */
@@ -211,6 +211,7 @@ bool DecodeSingleSprite(SpriteLoader::Sprite *sprite, SpriteFile &file, size_t f
 			}
 		}
 	}
+	#endif
 
 	return true;
 }
