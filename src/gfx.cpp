@@ -1063,6 +1063,7 @@ void DrawSprite(SpriteID img, PaletteID pal, int x, int y, const SubSprite *sub,
 template <int ZOOM_BASE, bool SCALED_XY>
 static void GfxBlitter(const Sprite * const sprite, int x, int y, BlitterMode mode, const SubSprite * const sub, SpriteID sprite_id, ZoomLevel zoom, const DrawPixelInfo *dst = nullptr)
 {
+	#ifndef DEDICATED
 	const DrawPixelInfo *dpi = (dst != nullptr) ? dst : _cur_dpi;
 	Blitter::BlitterParams bp;
 
@@ -1176,6 +1177,7 @@ static void GfxBlitter(const Sprite * const sprite, int x, int y, BlitterMode mo
 	}
 
 	BlitterFactory::GetCurrentBlitter()->Draw(&bp, mode, zoom);
+	#endif
 }
 
 /**
