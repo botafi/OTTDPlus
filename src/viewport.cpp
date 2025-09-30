@@ -1795,6 +1795,9 @@ static void ViewportDrawStrings(ZoomLevel zoom, const StringSpriteToDrawVector *
 
 void ViewportDoDraw(const Viewport &vp, int left, int top, int right, int bottom)
 {
+	#ifdef DEDICATED
+		throw std::runtime_error("ViewportDoDraw called in dedicated server");
+	#endif
 	_vd.dpi.zoom = vp.zoom;
 	int mask = ScaleByZoom(-1, vp.zoom);
 

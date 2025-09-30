@@ -9,6 +9,7 @@
 
 #include "../stdafx.h"
 #include "pool_type.hpp"
+#include "../debug.h"
 
 #include "../safeguards.h"
 
@@ -31,5 +32,13 @@
 {
 	for (PoolBase *pool : *PoolBase::GetPools()) {
 		if (pt.Test(pool->type)) pool->CleanPool();
+	}
+}
+
+/* static */ void PoolBase::LogMemoryUsage(PoolTypes pt, std::string_view reason)
+{
+ 	Debug(memory, 0, "Pool memory snapshot: {}", reason);
+	for (const PoolBase *pool : *PoolBase::GetPools()) {
+		if (pt.Test(pool->type)) pool->LogMemoryUsage(reason);
 	}
 }

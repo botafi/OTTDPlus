@@ -41,6 +41,7 @@ extern int _debug_driver_level;
 extern int _debug_grf_level;
 extern int _debug_map_level;
 extern int _debug_misc_level;
+extern int _debug_memory_level;
 extern int _debug_net_level;
 extern int _debug_sprite_level;
 extern int _debug_oldloader_level;

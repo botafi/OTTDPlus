@@ -59,6 +59,7 @@
 #include "../order_backup.h"
 #include "../error.h"
 #include "../disaster_vehicle.h"
+#include "../core/pool_type.hpp"
 #include "../ship.h"
 #include "../water.h"
 #include "../timer/timer.h"
@@ -3428,6 +3429,8 @@ bool AfterLoadGame()
 			c->settings = _settings_client.company;
 		}
 	}
+
+	PoolBase::LogMemoryUsage(PT_ALL, "after load game");
 
 	return true;
 }

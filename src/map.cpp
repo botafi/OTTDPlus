@@ -55,6 +55,12 @@
 	Tile::base_tiles = std::make_unique<Tile::TileBase[]>(Map::size);
 	Tile::extended_tiles = std::make_unique<Tile::TileExtended[]>(Map::size);
 
+	const size_t base_bytes = static_cast<size_t>(Map::size) * sizeof(Tile::TileBase);
+	const size_t extended_bytes = static_cast<size_t>(Map::size) * sizeof(Tile::TileExtended);
+	const size_t total_bytes = base_bytes + extended_bytes;
+	Debug(memory, 0, "Map tile storage: {} entries -> base={} bytes, extended={} bytes, total={} bytes ({:.2f} MiB)",
+		Map::size, base_bytes, extended_bytes, total_bytes, static_cast<double>(total_bytes) / (1024.0 * 1024.0));
+
 	AllocateWaterRegions();
 }
 

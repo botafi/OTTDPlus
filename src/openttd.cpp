@@ -56,6 +56,7 @@
 #include "crashlog.h"
 #include "engine_func.h"
 #include "core/random_func.hpp"
+#include "core/pool_type.hpp"
 #include "rail_gui.h"
 #include "road_gui.h"
 #include "core/backup_type.hpp"
@@ -855,6 +856,7 @@ static void OnStartGame(bool dedicated_server)
 
 	/* Execute the game-start script */
 	IConsoleCmdExec("exec scripts/game_start.scr 0");
+	PoolBase::LogMemoryUsage(PT_ALL, dedicated_server ? "start game (dedicated)" : "start game");
 }
 
 static void MakeNewGameDone()

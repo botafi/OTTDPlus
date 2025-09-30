@@ -10,6 +10,10 @@
 #ifndef POOL_TYPE_HPP
 #define POOL_TYPE_HPP
 
+#include <optional>
+#include <string_view>
+#include <vector>
+
 #include "enum_type.hpp"
 
 /** Various types of a pool. */
@@ -110,6 +114,9 @@ struct PoolBase {
 	 * Virtual method that deletes all items in the pool.
 	 */
 	virtual void CleanPool() = 0;
+	virtual void LogMemoryUsage(std::string_view reason) const = 0;
+
+	static void LogMemoryUsage(PoolTypes pt, std::string_view reason);
 
 private:
 	/**
@@ -149,9 +156,13 @@ public:
 
 	std::vector<Titem *> data{}; ///< Pointers to Titem
 	std::vector<BitmapStorage> used_bitmap{}; ///< Bitmap of used indices.
+	size_t reserved_item_bytes = 0; ///< Total bytes reserved for pool items (including cached memory).
+	size_t peak_reserved_item_bytes = 0; ///< Peak reserved bytes observed for this pool.
+	size_t next_log_item_threshold = 1; ///< Next item count threshold that triggers a usage log.
 
 	Pool(std::string_view name) : PoolBase(Tpool_type), name(name) {}
 	void CleanPool() override;
+	void LogMemoryUsage(std::string_view reason) const override;
 
 	/**
 	 * Returns Titem with given index

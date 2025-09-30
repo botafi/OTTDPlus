@@ -1091,6 +1091,9 @@ void CallVehicleTicks()
  */
 static void DoDrawVehicle(const Vehicle *v)
 {
+	#ifdef DEDICATED
+		throw std::runtime_error("DoDrawVehicle called in dedicated server");
+	#endif
 	PaletteID pal = PAL_NONE;
 
 	if (v->vehstatus.Test(VehState::DefaultPalette)) pal = v->vehstatus.Test(VehState::Crashed) ? PALETTE_CRASH : GetVehiclePalette(v);

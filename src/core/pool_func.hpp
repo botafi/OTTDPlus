@@ -13,6 +13,7 @@
 #include "bitmath_func.hpp"
 #include "math_func.hpp"
 #include "pool_type.hpp"
+#include "../debug.h"
 #include "../error_func.h"
 
 #include "../saveload/saveload_error.hpp" // SlErrorCorruptFmt
@@ -50,6 +51,8 @@ DEFINE_POOL_METHOD(inline void)::ResizeFor(size_t index)
 		/* Bits above new size are considered used. */
 		this->used_bitmap[new_size / BITMAP_SIZE] |= (~static_cast<BitmapStorage>(0)) << (new_size % BITMAP_SIZE);
 	}
+
+	this->LogMemoryUsage("resize");
 }
 
 /**
@@ -97,11 +100,22 @@ DEFINE_POOL_METHOD(inline void *)::AllocateItem(size_t size, size_t index)
 		this->alloc_cache = this->alloc_cache->next;
 	} else {
 		item = reinterpret_cast<Titem *>(this->allocator.allocate(size));
+		this->reserved_item_bytes += size;
+		this->peak_reserved_item_bytes = std::max(this->peak_reserved_item_bytes, this->reserved_item_bytes);
 	}
 	this->data[index] = item;
 	SetBit(this->used_bitmap[index / BITMAP_SIZE], index % BITMAP_SIZE);
 	/* MSVC complains about casting to narrower type, so first cast to the base type... then to the strong type. */
 	item->index = static_cast<Tindex>(static_cast<Tindex::BaseType>(index));
+
+	if (this->items >= this->next_log_item_threshold) {
+		this->LogMemoryUsage("allocation");
+		if (this->next_log_item_threshold < MAX_SIZE) {
+			this->next_log_item_threshold = std::min<size_t>(this->next_log_item_threshold * 2, MAX_SIZE);
+		} else {
+			this->next_log_item_threshold = std::numeric_limits<size_t>::max();
+		}
+	}
 	return item;
 }
 
@@ -166,6 +180,7 @@ DEFINE_POOL_METHOD(void)::FreeItem(size_t size, size_t index)
 		this->alloc_cache = ac;
 	} else {
 		this->allocator.deallocate(reinterpret_cast<uint8_t*>(this->data[index]), size);
+		this->reserved_item_bytes -= size;
 	}
 	this->data[index] = nullptr;
 	this->first_free = std::min(this->first_free, index);
@@ -173,6 +188,10 @@ DEFINE_POOL_METHOD(void)::FreeItem(size_t size, size_t index)
 	if (!this->cleaning) {
 		ClrBit(this->used_bitmap[index / BITMAP_SIZE], index % BITMAP_SIZE);
 		Titem::PostDestructor(index);
+		if (this->items == 0) {
+			this->next_log_item_threshold = 1;
+			this->LogMemoryUsage("pool empty");
+		}
 	}
 }
 
@@ -190,14 +209,33 @@ DEFINE_POOL_METHOD(void)::CleanPool()
 	this->used_bitmap.shrink_to_fit();
 	this->first_unused = this->first_free = 0;
 	this->cleaning = false;
+	this->next_log_item_threshold = 1;
 
 	if (Tcache) {
 		while (this->alloc_cache != nullptr) {
 			AllocCache *ac = this->alloc_cache;
 			this->alloc_cache = ac->next;
 			this->allocator.deallocate(reinterpret_cast<uint8_t*>(ac), sizeof(Titem));
+			this->reserved_item_bytes -= sizeof(Titem);
 		}
 	}
+	this->reserved_item_bytes = 0;
+
+	if (this->peak_reserved_item_bytes != 0) {
+		this->LogMemoryUsage("after clean");
+	}
+	this->peak_reserved_item_bytes = 0;
+}
+
+DEFINE_POOL_METHOD(void)::LogMemoryUsage(std::string_view reason) const
+{
+	const size_t pointer_bytes = this->data.capacity() * sizeof(Titem *);
+	const size_t bitmap_bytes = this->used_bitmap.capacity() * sizeof(BitmapStorage);
+	const size_t total_bytes = pointer_bytes + bitmap_bytes + this->reserved_item_bytes;
+	Debug(memory, 0, "Pool {} {}: items={} first_unused={} reserved={} bytes (peak={}) pointer_capacity={} ({} bytes) bitmap_capacity={} ({} bytes) total={} bytes ({:.2f} MiB)",
+		this->name, reason, this->items, this->first_unused, this->reserved_item_bytes, this->peak_reserved_item_bytes,
+		this->data.capacity(), pointer_bytes, this->used_bitmap.capacity(), bitmap_bytes,
+		total_bytes, static_cast<double>(total_bytes) / (1024.0 * 1024.0));
 }
 
 #undef DEFINE_POOL_METHOD

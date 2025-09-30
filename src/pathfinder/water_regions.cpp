@@ -8,6 +8,8 @@
  /** @file water_regions.cpp Handles dividing the water in the map into square regions to assist pathfinding. */
 
 #include "../stdafx.h"
+#include <cstddef>
+#include <cstdint>
 #include "../map_func.h"
 #include "water_regions.h"
 #include "../tilearea_type.h"
@@ -422,6 +424,12 @@ void AllocateWaterRegions()
 	_is_water_region_valid.resize(number_of_regions, false);
 
 	Debug(map, 2, "Allocating {} x {} water regions", GetWaterRegionMapSizeX(), GetWaterRegionMapSizeY());
+	const size_t data_bytes = _water_region_data.capacity() * sizeof(WaterRegionData);
+	const size_t validity_bits = _is_water_region_valid.capacity();
+	const size_t validity_bytes = (validity_bits + 7) / 8;
+	const size_t total_bytes = data_bytes + validity_bytes;
+	Debug(memory, 0, "Water region storage: regions={} data={} bytes validity={} bytes total={} bytes ({:.2f} MiB)",
+		number_of_regions, data_bytes, validity_bytes, total_bytes, static_cast<double>(total_bytes) / (1024.0 * 1024.0));
 	assert(_is_water_region_valid.size() == _water_region_data.size());
 }
 

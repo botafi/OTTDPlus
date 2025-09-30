@@ -40,6 +40,7 @@ int _debug_driver_level;
 int _debug_grf_level;
 int _debug_map_level;
 int _debug_misc_level;
+int _debug_memory_level;
 int _debug_net_level;
 int _debug_sprite_level;
 int _debug_oldloader_level;
@@ -65,6 +66,7 @@ static const std::initializer_list<DebugLevel> _debug_levels{
 	DEBUG_LEVEL(grf),
 	DEBUG_LEVEL(map),
 	DEBUG_LEVEL(misc),
+	DEBUG_LEVEL(memory),
 	DEBUG_LEVEL(net),
 	DEBUG_LEVEL(sprite),
 	DEBUG_LEVEL(oldloader),
