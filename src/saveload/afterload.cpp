@@ -219,11 +219,13 @@ static inline RailType UpdateRailType(RailType rt, RailType min)
  */
 void UpdateAllVirtCoords()
 {
+	#ifndef DEDICATED
 	UpdateAllStationVirtCoords();
 	UpdateAllSignVirtCoords();
 	UpdateAllTownVirtCoords();
 	UpdateAllTextEffectVirtCoords();
 	RebuildViewportKdtree();
+	#endif
 }
 
 void ClearAllCachedNames()

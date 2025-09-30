@@ -1387,10 +1387,10 @@ void GameLoop()
 		/* Singleplayer */
 		StateGameLoop();
 	}
-
-	if (_pause_mode.None() && HasBit(_display_opt, DO_FULL_ANIMATION)) DoPaletteAnimations();
-
-	SoundDriver::GetInstance()->MainLoop();
-	MusicLoop();
-	SocialIntegration::RunCallbacks();
+	#ifndef DEDICATED
+		if (_pause_mode.None() && HasBit(_display_opt, DO_FULL_ANIMATION)) DoPaletteAnimations();
+		SoundDriver::GetInstance()->MainLoop();
+		MusicLoop();
+		SocialIntegration::RunCallbacks();
+	#endif
 }
